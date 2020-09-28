@@ -1,0 +1,48 @@
+{
+    "upload_host": "http://test.appapi.biz.hnquyou.com",
+    "instructions" : "1. 选择账号点击开始；2. 等待程序启动浏览器自动登录；3. 在浏览器中填入验证码，点击下一步；4. 等待采集完成（浏览器关闭，输出窗口出现“Succeed”）。；备注：程序采集前7日数据。 ",
+    "account_list": [
+        {
+            "type" : "vivo",
+            "name": "quyou_001",
+            "account": "quyou_001",
+            "pwd": "Qy123456@"
+        },
+        {
+            "type" : "oppo",
+            "name": "OPPO亲信",
+            "account": "HLgame005@hiillo.cn",
+            "pwd": "Hailu005"
+        },
+        {
+            "type" : "oppo",
+            "name": "OPPO极度",
+            "account": "HLgame007@hiillo.cn",
+            "pwd": "Hailu007"
+        },
+        {
+            "type" : "oppo",
+            "name": "嗨鹿的账号",
+            "account": "HLgame002@hiillo.cn",
+            "pwd": "quyou009"
+        },
+        {
+            "type" : "oppo",
+            "name": "OPPO开发者后台趣游",
+            "account": "HLgame001@hiillo.cn",
+            "pwd": "quyou012"
+        },
+        {
+            "type" : "oppo",
+            "name": "OPPO乐丽",
+            "account": "HLgame006@hiillo.cn",
+            "pwd": "Hailu006"
+        },
+        {
+            "type" : "oppo",
+            "name": "OPPO酷乐",
+            "account": "15526332863",
+            "pwd": "QY123456"
+        }
+    ]
+}
