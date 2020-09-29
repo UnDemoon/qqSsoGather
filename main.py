@@ -22,8 +22,7 @@ from home import Ui_MainWindow as Ui
 #   引入登录模块
 import login as lgm
 #   引入requests类
-from OppoGather import OppoGather as OppoGer
-from VivoGather import VivoGather as VivoGer
+from DataGather import DataGather
 from UploadData import UploadData as UpData
 
 
@@ -64,10 +63,14 @@ class MyApp(QtWidgets.QMainWindow, Ui):
         self.browser, wait = browserInit()
         cookies = lgm.loginByBrowser(
             self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10", acc_info['account'], acc_info['pwd'], wait)
-        print(cookies)
         if not cookies:
             self.log("Error in get cookies")
         self.browser.quit()
+        #   线程运行采集
+        gaThr = GatherThread(cookies, acc_info['name'] + ' - !完成!')
+        gaThr.sig.completed.connect(self.log)
+        self.threadPools.append(gaThr)  # 加入线程池，局域变量线程未完成完后销毁导致异常
+        gaThr.start()
 
     #    输出信息
     def log(self, text, line=True):
@@ -82,8 +85,8 @@ class CompletionSignal(QObject):
     completed = pyqtSignal(str)
 
 
-# oppo采集线程
-class OppoThread(QThread):
+# gather采集线程
+class GatherThread(QThread):
     def __init__(self, cookies, loginfo):
         super().__init__()
         self.cookies = cookies   # (ck1, ck2)
@@ -91,18 +94,11 @@ class OppoThread(QThread):
         self.sig = CompletionSignal()
 
     def run(self):
-        ck_1, ck_2 = self.cookies
-        up = UpData()
+        cookies = self.cookies
         #   开发平台数据采集
-        oGer_1 = OppoGer(ck_1)
-        retain, payment = oGer_1.appCollect()
-        #   广告平台数据采集
-        oGer_2 = OppoGer(ck_2)
-        stats, income = oGer_2.advCollect()
-        up.up('oppo_retain', retain)
-        up.up('oppo_payment', payment)
-        up.up('oppo_report', stats)
-        up.up('oppo_subRetain', income)
+        gather = DataGather(cookies)
+        res = gather.listAccount()
+        print(res)
         self.sig.completed.emit(self.info)
 
 
