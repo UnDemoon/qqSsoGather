@@ -25,6 +25,7 @@ class DataGather:
                 }
             }
         }
+        self.accounts = []
         #   配置requests session
         sess = requests.session()  # 新建session
         c = requests.cookies.RequestsCookieJar()  # 添加cookies到CookieJar
@@ -73,4 +74,6 @@ class DataGather:
         }
         cf = self.colloctConf
         data = self._post(cf['get_portal_data']['url'], json.dumps(cf['get_portal_data']['data']))
-        return data
+        for item in data['data'][0]['account_list']:
+            self.accounts.append(item['url'])
+        return self.accounts

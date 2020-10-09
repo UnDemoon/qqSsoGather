@@ -23,7 +23,7 @@ from home import Ui_MainWindow as Ui
 import login as lgm
 #   引入requests类
 from DataGather import DataGather
-from UploadData import UploadData as UpData
+# from UploadData import UploadData as UpData
 
 
 class MyApp(QtWidgets.QMainWindow, Ui):
@@ -62,7 +62,9 @@ class MyApp(QtWidgets.QMainWindow, Ui):
     def lgGether(self, acc_info):
         self.browser, wait = browserInit()
         cookies = lgm.loginByBrowser(
-            self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10", acc_info['account'], acc_info['pwd'], wait)
+            self.browser,
+            "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10",
+            acc_info['account'], acc_info['pwd'], wait)
         if not cookies:
             self.log("Error in get cookies")
         self.browser.quit()
@@ -89,7 +91,7 @@ class CompletionSignal(QObject):
 class GatherThread(QThread):
     def __init__(self, cookies, loginfo):
         super().__init__()
-        self.cookies = cookies   # (ck1, ck2)
+        self.cookies = cookies  # (ck1, ck2)
         self.info = loginfo
         self.sig = CompletionSignal()
 
@@ -126,9 +128,10 @@ if __name__ == '__main__':
     now = time.localtime()
     t = time.strftime("%Y%m%d%H%M", now)
     URL = [
-        'https://id.heytap.com/index.html',   # oppo 1
-        'https://id.oppo.com/index.html',    # oppo 2
-        'https://id.vivo.com.cn/?callback=https://dev.vivo.com.cn/home&_'+t+'#!/access/login',   # vivo
+        'https://id.heytap.com/index.html',  # oppo 1
+        'https://id.oppo.com/index.html',  # oppo 2
+        'https://id.vivo.com.cn/?callback=https://dev.vivo.com.cn/home&_' + t +
+        '#!/access/login',  # vivo
     ]
     try:
         RUN_EVN = sys.argv[1]
