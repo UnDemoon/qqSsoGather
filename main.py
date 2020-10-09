@@ -24,6 +24,7 @@ import login as lgm
 #   引入requests类
 from DataGather import DataGather
 # from UploadData import UploadData as UpData
+from browsermobproxy import Server
 
 
 class MyApp(QtWidgets.QMainWindow, Ui):
@@ -60,16 +61,12 @@ class MyApp(QtWidgets.QMainWindow, Ui):
 
     #   登录并采集
     def lgGether(self, acc_info):
-        self.browser, wait = browserInit()
-        cookies = lgm.loginByBrowser(
-            self.browser,
-            "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10",
-            acc_info['account'], acc_info['pwd'], wait)
+        self.browser, wait, proxy = browserInit()
+        cookies = lgm.loginByBrowser(self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10", wait)
         if not cookies:
             self.log("Error in get cookies")
-        self.browser.quit()
         #   线程运行采集
-        gaThr = GatherThread(cookies, acc_info['name'] + ' - !完成!')
+        gaThr = GatherThread(self.browser, cookies, proxy, acc_info['name'] + ' - !完成!')
         gaThr.sig.completed.connect(self.log)
         self.threadPools.append(gaThr)  # 加入线程池，局域变量线程未完成完后销毁导致异常
         gaThr.start()
@@ -89,27 +86,46 @@ class CompletionSignal(QObject):
 
 # gather采集线程
 class GatherThread(QThread):
-    def __init__(self, cookies, loginfo):
+    def __init__(self, browser, cookies, proxy, loginfo):
         super().__init__()
         self.cookies = cookies  # (ck1, ck2)
         self.info = loginfo
+        self.browser = browser
+        self.proxy = proxy
         self.sig = CompletionSignal()
 
     def run(self):
         cookies = self.cookies
         #   开发平台数据采集
         gather = DataGather(cookies)
-        res = gather.listAccount()
-        print(res)
+        accs = gather.listAccount()
+        for ac in accs:
+            acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
+            self.proxy.new_har("douyin", options={'captureHeaders': True, 'captureContent': True})
+            result = self.proxy.har
+            for entry in result['log']['entries']:
+                _url = entry['request']['url']
+                # 根据URL找到数据接口
+                if "ad.qq.com/ap/dpdiagnosis/get_batch" in _url:
+                    _response = entry['response']
+                    _content = _response['content']['text']
+                    print(_content)
+            # subGater = DataGather(acCookies)
+            # data = subGater.dataPlan()
+            # print(data)
         self.sig.completed.emit(self.info)
 
 
 # 浏览器开启
 def browserInit():
+    server = Server('.\\browsermob-proxy-2.1.4\\bin\\browsermob-proxy.bat')
+    server.start()
+    proxy = server.create_proxy()
     # 实例化一个chrome浏览器
     chrome_options = webdriver.ChromeOptions()
     # options.add_argument(".\ChromePortable\App\Chrome\chrome.exe");
     chrome_options.binary_location = ".\\ChromePortable\\App\\Chrome\\chrome.exe"
+    chrome_options.add_argument('--proxy-server={0}'.format(proxy.proxy))
     # chrome_options = webdriver.ChromeOptions()
     # chrome_options.add_argument('--headless')
     # chrome_options.add_argument('--disable-gpu')
@@ -117,7 +133,7 @@ def browserInit():
     browser = webdriver.Chrome(options=chrome_options)
     # 设置等待超时
     wait = WebDriverWait(browser, 100)
-    return (browser, wait)
+    return (browser, wait, proxy)
 
 
 if __name__ == '__main__':
@@ -127,12 +143,6 @@ if __name__ == '__main__':
     # https://open.oppomobile.com
     now = time.localtime()
     t = time.strftime("%Y%m%d%H%M", now)
-    URL = [
-        'https://id.heytap.com/index.html',  # oppo 1
-        'https://id.oppo.com/index.html',  # oppo 2
-        'https://id.vivo.com.cn/?callback=https://dev.vivo.com.cn/home&_' + t +
-        '#!/access/login',  # vivo
-    ]
     try:
         RUN_EVN = sys.argv[1]
     except Exception:
