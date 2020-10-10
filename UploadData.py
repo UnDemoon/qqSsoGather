@@ -12,23 +12,12 @@ import time
 import datetime
 
 
-def filelog(msg):
-    # return True
-    file_path = './log.log'
-    with open(file_path, "a") as f:
-        f.write(str(datetime.datetime.now()))
-        f.write("\n")
-        f.write(msg)
-        f.write("\n\n")
-
-
 class UploadData:
     def __init__(
         self,
-        account='qqcollect',
-        pwd='huoyi123456',
-        secret_key='a77744a080161e3c5c71ee7421fedab0fc52b18dd5fcd90ea637e132fa07850c',
-        platform_type='GatherOppoData',
+        account='houduan',
+        pwd='hd666666',
+        secret_key='cd283176e1e2c2a69a00e76a52742d42a4ae0b3780eec48fae289977008e9a3b',
     ):
         with open("./config-default.json", encoding='utf-8') as defcfg:
             cfg = json.load(defcfg)
@@ -36,26 +25,9 @@ class UploadData:
         self.secret_key = secret_key
         self.urls = {
             'token':
-            self.host + '/api/'+platform_type+'/accessToken.html',
-            'oppo_retain':
-            self.host + '/api/GatherOppoData/addOppoCollectRetain.html',
-            'oppo_payment':
-            self.host + '/api/GatherOppoData/addOppoCollectPayment.html',
-            'oppo_report':
-            self.host + '/api/GatherOppoData/addOppoCollectAdvReport.html',
-            'oppo_subRetain':
-            self.host + '/api/GatherOppoData/subAddOppoCollectRetain.html',
-            'vivo_basic':
-            self.host + '/api/GatherVivoData/addVivoCollectBasic.html',
-            'vivo_subBasic':
-            self.host + '/api/GatherVivoData/subAddVivoCollectBasic.html',
-            'vivo_app':
-            self.host + '/api/GatherVivoData/addVivoCollectApp.html',
-            'vivo_position':
-            self.host + '/api/GatherVivoData/addVivoCollectPosition.html',
-            'vivo_adv':
-            self.host + '/api/GatherVivoData/addVivoCollectAdv.html',
-            
+            self.host + '/api/WeixinData/accessToken.html',
+            'addQqSsoCampaign':
+            self.host + '/api/WeixinData/addQqSsoCampaign.html',
         }
         self.token = self.getToken(account, pwd)
 

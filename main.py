@@ -25,6 +25,8 @@ import login as lgm
 from DataGather import DataGather
 # from UploadData import UploadData as UpData
 from browsermobproxy import Server
+#   工具集
+import utils as mytools
 
 
 class MyApp(QtWidgets.QMainWindow, Ui):
@@ -99,39 +101,57 @@ class GatherThread(QThread):
         #   开发平台数据采集
         gather = DataGather(cookies)
         accs = gather.listAccount()
+        g_kt = None
+        acCookies = None
         for ac in accs:
-            acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
-            self.proxy.new_har("douyin", options={'captureHeaders': True, 'captureContent': True})
-            result = self.proxy.har
-            for entry in result['log']['entries']:
-                _url = entry['request']['url']
-                # 根据URL找到数据接口
-                if "ad.qq.com/ap/dpdiagnosis/get_batch" in _url:
-                    _response = entry['response']
-                    _content = _response['content']['text']
-                    print(_content)
-            # subGater = DataGather(acCookies)
-            # data = subGater.dataPlan()
-            # print(data)
+            if g_kt and acCookies:
+                subGater = DataGather(acCookies)
+                data = subGater.dataPlan(g_kt, ac.get('account_id'))
+                mytools.logFile(str(data))
+            else:
+                acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
+                result = self.proxy.har
+                for entry in result['log']['entries']:
+                    _url = entry['request']['url']
+                    # 根据URL找到数据接口
+                    if "ad.qq.com/ap/report/adgroup_list" in _url:
+                        sp1 = _url.find('g_tk')
+                        sp2 = _url.find('owner')
+                        g_kt = _url[sp1+5:sp2-1]
+                        break
+                        break
         self.sig.completed.emit(self.info)
 
 
+# # 浏览器开启
+# def browserInit():
+#     server = Server('.\\browsermob-proxy-2.1.4\\bin\\browsermob-proxy.bat')
+#     server.start()
+#     proxy = server.create_proxy()
+#     # 实例化一个chrome浏览器
+#     chrome_options = webdriver.ChromeOptions()
+#     # options.add_argument(".\ChromePortable\App\Chrome\chrome.exe");
+#     chrome_options.binary_location = ".\\ChromePortable\\App\\Chrome\\chrome.exe"
+#     chrome_options.add_argument('--proxy-server={0}'.format(proxy.proxy))
+#     # chrome_options = webdriver.ChromeOptions()
+#     # chrome_options.add_argument('--headless')
+#     # chrome_options.add_argument('--disable-gpu')
+#     # browser = webdriver.Chrome(options=chrome_options)
+#     browser = webdriver.Chrome(options=chrome_options)
+#     # 设置等待超时
+#     wait = WebDriverWait(browser, 100)
+#     return (browser, wait, proxy)
+
 # 浏览器开启
 def browserInit():
-    server = Server('.\\browsermob-proxy-2.1.4\\bin\\browsermob-proxy.bat')
+    server = Server(".\\browsermob-proxy-2.1.4\\bin\\browsermob-proxy.bat") 
     server.start()
     proxy = server.create_proxy()
-    # 实例化一个chrome浏览器
-    chrome_options = webdriver.ChromeOptions()
-    # options.add_argument(".\ChromePortable\App\Chrome\chrome.exe");
-    chrome_options.binary_location = ".\\ChromePortable\\App\\Chrome\\chrome.exe"
-    chrome_options.add_argument('--proxy-server={0}'.format(proxy.proxy))
-    # chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument('--headless')
-    # chrome_options.add_argument('--disable-gpu')
-    # browser = webdriver.Chrome(options=chrome_options)
-    browser = webdriver.Chrome(options=chrome_options)
-    # 设置等待超时
+    proxy.new_har("douyin", options={'captureHeaders': True, 'captureContent': True})
+    #   firfox 调用 browsermob-proxy 方法
+    profile = webdriver.FirefoxProfile()
+    profile.set_proxy(proxy.selenium_proxy())
+    browser = webdriver.Firefox(firefox_profile=profile)
     wait = WebDriverWait(browser, 100)
     return (browser, wait, proxy)
 
@@ -140,7 +160,6 @@ if __name__ == '__main__':
     # 定义为全局变量，方便其他模块使用
     global URL, RUN_EVN
     # 登录界面的url
-    # https://open.oppomobile.com
     now = time.localtime()
     t = time.strftime("%Y%m%d%H%M", now)
     try:

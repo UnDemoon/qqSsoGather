@@ -14,7 +14,7 @@ import time
 
 # login
 def loginByBrowser(browser, url, wait):
-    browser.set_page_load_timeout(100)
+    browser.set_page_load_timeout(30)
     try:
         browser.get(url)
     except BaseException:
