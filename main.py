@@ -23,7 +23,7 @@ from home import Ui_MainWindow as Ui
 import login as lgm
 #   引入requests类
 from DataGather import DataGather
-# from UploadData import UploadData as UpData
+from UploadData import UploadData
 from browsermobproxy import Server
 #   工具集
 import utils as mytools
@@ -103,11 +103,13 @@ class GatherThread(QThread):
         accs = gather.listAccount()
         g_kt = None
         acCookies = None
+        UpData = UploadData()
         for ac in accs:
             if g_kt and acCookies:
                 subGater = DataGather(acCookies)
                 data = subGater.dataPlan(g_kt, ac.get('account_id'))
-                mytools.logFile(str(data))
+                # mytools.logFile(str(data))
+                UpData.up('addQqSsoCampaign', data)
             else:
                 acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
                 result = self.proxy.har
