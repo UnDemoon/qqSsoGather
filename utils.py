@@ -47,4 +47,4 @@ def logFile(strings: str, file='debug-log.log'):
 
 
 # if __name__ == "__main__":
-#     print(str(dateList()[0].strftime('%Y%m%d')))
+#     print(dateList())

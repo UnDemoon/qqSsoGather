@@ -1,5 +1,6 @@
 {
     "upload_host": "http://test.api.biz.hnquyou.com",
+    "1-upload_host": "http://api.biz.hnquyou.com",
     "instructions" : "//// ",
     "account_list": [
         {

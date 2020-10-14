@@ -47,7 +47,6 @@ class UploadData:
         try:
             r = requests.post(url=url, data=data)
             res = r.json()
-            print(res)
         except BaseException as e:
             print(str(e))
         return res

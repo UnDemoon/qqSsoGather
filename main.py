@@ -108,7 +108,6 @@ class GatherThread(QThread):
             if g_kt and acCookies:
                 subGater = DataGather(acCookies)
                 data = subGater.dataPlan(g_kt, ac.get('account_id'))
-                # mytools.logFile(str(data))
                 UpData.up('addQqSsoCampaign', data)
             else:
                 acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
@@ -122,6 +121,7 @@ class GatherThread(QThread):
                         g_kt = _url[sp1+5:sp2-1]
                         break
                         break
+        self.browser.quit()
         self.sig.completed.emit(self.info)
 
 

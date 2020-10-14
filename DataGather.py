@@ -137,14 +137,19 @@ class DataGather:
             url += str(key) + "=" + str(parm[key]) + "&"
         for dt in mytools.dateList():
             day = dt.strftime('%Y%m%d')
+            day_str = str(dt)
+            data['page'] = 1   #    重新计页
             data['rpt_filter']['time_range']['start_date'] = day
             data['rpt_filter']['time_range']['end_date'] = day
-            res = self._post(url, json.dumps(data))
-            res_list += self.dataDeal(res, str(dt))
+            data_json_str = json.dumps(data)
+            res = self._post(url, data_json_str)
+            res_list += self.dataDeal(res, day_str)
             while res['data']['conf']['page'] < res['data']['conf']['total_page']:
-                data['rpt_filter']['time_range']['page'] = data['rpt_filter']['time_range']['page'] + 1   # 翻页
-                res = self._post(url, json.dumps(data))
-                res_list += self.dataDeal(res, str(dt))
+                mytools.randomSleep()
+                data['page'] = data['page'] + 1   # 翻页
+                data_json_str = json.dumps(data)
+                res = self._post(url, data_json_str)
+                res_list += self.dataDeal(res, day_str)
         return res_list
 
     @staticmethod
@@ -163,8 +168,6 @@ class DataGather:
                     'ctr': item['ctr'],
                     'ka_view_count': item['ka_view_count'],
                     'valid_click_count': item['valid_click_count'],
-                    'created_by_developer_app_id': item['created_by_developer_app_id'],
-                    'last_mod_by_developer_app_id': item['last_mod_by_developer_app_id']
                 }
                 res.append(one)
         except Exception:
