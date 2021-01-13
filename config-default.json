@@ -1,7 +1,7 @@
 {
     "upload_host": "http://test.api.biz.hnquyou.com",
     "1-upload_host": "http://api.biz.hnquyou.com",
-    "instructions" : "//// ",
+    "instructions" : "当前版本v-1.07 ",
     "account_list": [
         {
             "type" : "vivo",

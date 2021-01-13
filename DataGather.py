@@ -3,12 +3,11 @@
 @Version: 1.0
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
-@LastEditors: Demoon
-@LastEditTime: 2020-07-01 11:36:41
+LastEditors: Please set LastEditors
+LastEditTime: 2021-01-13 15:55:11
 '''
 import json
 import requests
-import datetime
 import utils as mytools
 
 
@@ -32,8 +31,10 @@ class DataGather:
         c = requests.cookies.RequestsCookieJar()  # 添加cookies到CookieJar
         for i in cookie:
             c.set(i["name"], i['value'])
-            if i['name'] == 'oadstk':
-                self.oadstk = i['value']
+            if i['name'] == 'gdt_protect':
+                self.g_tk = mytools.getACSRFToken(gdt_protect=i['value'])
+            elif i['name'] == 'skey':
+                self.g_tk = mytools.getACSRFToken(skey=i['value'])
         sess.cookies.update(c)  # 更新session里cookies
         self.req = sess
 
@@ -83,13 +84,12 @@ class DataGather:
             "x-requested-with": "XMLHttpRequest",
         }
         cf = self.colloctConf
-        data = self._post(cf['get_portal_data']['url'],
-                          json.dumps(cf['get_portal_data']['data']))
+        data = self._post(cf['get_portal_data']['url'], json.dumps(cf['get_portal_data']['data']))
         self.accounts = data['data'][0]['account_list']
         return self.accounts
 
     #   获取推广计划数据
-    def dataPlan(self, g_tk, own_id):
+    def dataPlan(self, own_id):
         res_list = []
         cf = self.colloctConf
         url = cf['campaign_data']['url']
@@ -125,7 +125,7 @@ class DataGather:
             "x-requested-with": "XMLHttpRequest",
         }
         parm = {
-            "g_tk": g_tk,
+            "g_tk": self.g_tk,
             "owner": own_id,
             "advertiser_id": own_id,
             # "trace_id": "294e3e58-14ab-ef91-dd0d-0d03b660cf13",
@@ -138,7 +138,7 @@ class DataGather:
         for dt in mytools.dateList():
             day = dt.strftime('%Y%m%d')
             day_str = str(dt)
-            data['page'] = 1   #    重新计页
+            data['page'] = 1   # 重新计页
             data['rpt_filter']['time_range']['start_date'] = day
             data['rpt_filter']['time_range']['end_date'] = day
             data_json_str = json.dumps(data)
@@ -173,4 +173,3 @@ class DataGather:
         except Exception:
             pass
         return res
-

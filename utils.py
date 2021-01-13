@@ -1,3 +1,11 @@
+'''
+Author: Demoon
+Date: 2020-09-28 15:41:31
+LastEditTime: 2021-01-13 15:55:28
+LastEditors: Please set LastEditors
+Description: In User Settings Edit
+FilePath: /qqSsoGather/utils.py
+'''
 import random
 import time
 import datetime
@@ -32,19 +40,20 @@ def dateList(daylen: int = 5):
         res.append(day)
     return res
 
-
-def logFile(strings: str, file='debug-log.log'):
-    """
-    字符串写入文件
-    """
-    now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    with open(file, 'a+') as f:
-        f.write('\n')
-        f.write(now)
-        f.write('\n')
-        f.write(strings)
-        f.write('\n')
+'''
+description: qqsso平台api的g_tk计算
+param {*}
+return {*}
+'''
+def getACSRFToken(gdt_protect: str = "", skey: str = ""):
+    e = 5381
+    t = gdt_protect if gdt_protect else skey
+    n = len(t)
+    for a in range(0, n):
+        e += (e << 5) + ord(t[a])
+    return 2147483647 & e
 
 
 # if __name__ == "__main__":
-#     print(dateList())
+#     g_tk = getACSRFToken(skey="e69e8316c9185d36743a13cb5d8d1099b7eba5ab")
+#     print(g_tk)

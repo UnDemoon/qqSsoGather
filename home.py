@@ -21,15 +21,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.formLayout = QtWidgets.QFormLayout()
-        self.formLayout.setObjectName("formLayout")
-        self.platformLabel = QtWidgets.QLabel(self.centralwidget)
-        self.platformLabel.setObjectName("platformLabel")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.platformLabel)
-        self.account_select = QtWidgets.QComboBox(self.centralwidget)
-        self.account_select.setObjectName("account_select")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.account_select)
-        self.verticalLayout.addLayout(self.formLayout)
         self.signinButton = QtWidgets.QPushButton(self.centralwidget)
         self.signinButton.setObjectName("signinButton")
         self.verticalLayout.addWidget(self.signinButton)
@@ -51,6 +42,5 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "oppo采集"))
-        self.platformLabel.setText(_translate("MainWindow", "账号"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "腾讯推广计划采集工具"))
         self.signinButton.setText(_translate("MainWindow", "开始"))
