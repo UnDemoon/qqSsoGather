@@ -16,3 +16,5 @@ build/
 dist/
 *.exe
 .vs
+*.zip
+*.7iz

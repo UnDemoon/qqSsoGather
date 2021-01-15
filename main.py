@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-01-13 16:00:33
+LastEditTime: 2021-01-15 15:45:37
 '''
 #  基础模块
 import sys
@@ -56,15 +56,15 @@ class MyApp(QtWidgets.QMainWindow, Ui):
         self.log(' 开始')
         self.browser = browserInit()
         logging.debug("browserInit succee")
-        cookies = lgm.loginByBrowser(self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10")
-        if cookies:
+        c_type, cookies = lgm.loginByBrowser(self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10")
+        if c_type and cookies:
             #   线程运行采集
-            gaThr = GatherThread(self.browser, cookies, '!完成!')
+            gaThr = GatherThread(self.browser, c_type, cookies, '!完成!')
             gaThr.sig.completed.connect(self.log)
             self.threadPools.append(gaThr)  # 加入线程池，局域变量线程未完成完后销毁导致异常
             gaThr.start()
         else:
-            self.log("登录异常，获取cookies失败，请稍后重试！")
+            self.log("登录异常，获取cookies失败，请稍后重新启动再次尝试！")
 
     #    输出信息
     def log(self, text, line=True):
@@ -81,9 +81,10 @@ class CompletionSignal(QObject):
 
 # gather采集线程
 class GatherThread(QThread):
-    def __init__(self, browser, cookies, loginfo):
+    def __init__(self, browser, c_type, cookies, loginfo):
         super().__init__()
-        self.cookies = cookies  # (ck1, ck2)
+        self.acc_type = c_type
+        self.cookies = cookies
         self.info = loginfo
         self.browser = browser
         self.sig = CompletionSignal()
@@ -92,10 +93,15 @@ class GatherThread(QThread):
         cookies = self.cookies
         #   开发平台数据采集
         gather = DataGather(cookies)
-        accs = gather.listAccount()
+        if self.acc_type == 1:
+            accs = gather.listAccount()
+        else:
+            accs = gather.listAccountSpe()
         UpData = UploadData()
+        acCookies = None
         for ac in accs:
-            acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
+            if not acCookies:
+                acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
             if not acCookies:
                 logging.error("Error in get account cookies params={}".format(str(ac)))
                 continue

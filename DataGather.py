@@ -4,11 +4,12 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-01-13 15:55:11
+LastEditTime: 2021-01-15 18:13:40
 '''
 import json
 import requests
 import utils as mytools
+import logging
 
 
 class DataGather:
@@ -23,9 +24,28 @@ class DataGather:
             'campaign_data': {
                 'url': 'https://ad.qq.com/ap/report/campaign_list?',
                 'data': {}
+            },
+            'spe_login': {
+                'url': 'https://ad.qq.com/tap/v1/login/login_info',
+                'data': {}
+            },
+            'spe_acc_list': {
+                'url': 'https://ad.qq.com/tap/v1/account_daily_report/list',
+                'data': {
+                    "user_id": 0,
+                    "start_date_millons": 1610553600000,  # 毫秒级时间戳
+                    "end_date_millons": 1610639999000,
+                    "need_yesterday_data": 0,
+                    "dynamic_field_list": [
+                        "balance", "view_count", "valid_click_count", "ctr",
+                        "cpc", "cost"
+                    ],
+                    "filter_empty_data": 1,
+                    "page": 1,
+                    "page_size": 50
+                }
             }
         }
-        self.accounts = []
         #   配置requests session
         sess = requests.session()  # 新建session
         c = requests.cookies.RequestsCookieJar()  # 添加cookies到CookieJar
@@ -47,9 +67,11 @@ class DataGather:
     #   post 方法
     def _post(self, url, para):
         res = self._subPost(url, para)
-        while (res.get('code') != 0) and (res.get('errno') != 0):
+        max_try = 3
+        while (res.get('code') != 0) and (res.get('errno') != 0) and (max_try > 0):
             mytools.randomSleep()
             res = self._subPost(url, para)
+            max_try = max_try - 1
         return res
 
     #   post子方法
@@ -59,7 +81,7 @@ class DataGather:
             r = self.req.post(url, para)
             res = r.json()
         except BaseException as e:
-            print(str(e))
+            logging.WARNING(str(e))
         return res
 
     # 获取用户列
@@ -84,9 +106,60 @@ class DataGather:
             "x-requested-with": "XMLHttpRequest",
         }
         cf = self.colloctConf
-        data = self._post(cf['get_portal_data']['url'], json.dumps(cf['get_portal_data']['data']))
-        self.accounts = data['data'][0]['account_list']
-        return self.accounts
+        data = self._post(cf['get_portal_data']['url'],
+                          json.dumps(cf['get_portal_data']['data']))
+        #   获取账号列表失败
+        try:
+            account_list = data['data'][0]['account_list']
+        except Exception:
+            account_list = []
+        return account_list
+
+    '''
+    description: 列出账号列表 - 特殊账号
+    param {*} self
+    return {dict}
+    '''
+
+    def listAccountSpe(self):
+        acc_info = self.loginAccSpe()
+        self.req.headers = {
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "zh-CN,zh;q=0.9",
+            "content-type": "application/json; charset=UTF-8",
+            "origin": "https://ad.qq.com",
+            "referer": "https://ad.qq.com/worktable/",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4270.0 Safari/537.36"
+            }
+        #   构建发送数据
+        cf = self.colloctConf
+        payload = cf['spe_acc_list']['data']
+        payload['user_id'] = acc_info['user_id']
+        suix, euix = mytools.timeLag()
+        payload['start_date_millons'] = int(str(suix) + '000')
+        payload['end_date_millons'] = int(str(euix) + '000')
+        #   发送
+        data = self._post(cf['spe_acc_list']['url'], json.dumps(payload))
+        account_list = []
+        #   结果处理
+        try:
+            for item in data['data']['list']:
+                account_list.append({
+                    "account_id": item['account_id'],
+                    "url": "https://ad.qq.com/atlas/{0}/admanage/adgroup".format(str(item['account_id']))
+                })
+        except Exception:
+            pass
+        return account_list
+
+    def loginAccSpe(self):
+        cf = self.colloctConf
+        data = self._post(cf['spe_login']['url'], "")
+        return data['data']
 
     #   获取推广计划数据
     def dataPlan(self, own_id):
@@ -138,15 +211,16 @@ class DataGather:
         for dt in mytools.dateList():
             day = dt.strftime('%Y%m%d')
             day_str = str(dt)
-            data['page'] = 1   # 重新计页
+            data['page'] = 1  # 重新计页
             data['rpt_filter']['time_range']['start_date'] = day
             data['rpt_filter']['time_range']['end_date'] = day
             data_json_str = json.dumps(data)
             res = self._post(url, data_json_str)
             res_list += self.dataDeal(res, day_str)
-            while res['data']['conf']['page'] < res['data']['conf']['total_page']:
+            while res['data']['conf']['page'] < res['data']['conf'][
+                    'total_page']:
                 mytools.randomSleep()
-                data['page'] = data['page'] + 1   # 翻页
+                data['page'] = data['page'] + 1  # 翻页
                 data_json_str = json.dumps(data)
                 res = self._post(url, data_json_str)
                 res_list += self.dataDeal(res, day_str)
