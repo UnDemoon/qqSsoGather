@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-01-19 11:39:03
+LastEditTime: 2021-02-04 10:35:09
 '''
 #  基础模块
 import sys
@@ -97,6 +97,7 @@ class GatherThread(QThread):
             accs = gather.listAccount()
         else:
             accs = gather.listAccountSpe()
+        print(accs)
         UpData = UploadData()
         acCookies = None
         for ac in accs:
@@ -135,6 +136,9 @@ def browserInit():
     chrome_options.binary_location = ".\\ChromePortable\\App\\Chrome\\chrome.exe"
     # chrome_options = webdriver.ChromeOptions()
     # chrome_options.add_argument('--headless')   #   静默开启
+    # chrome_options.add_argument('--ignore-certificate-errors')
+    chrome_options.add_argument("--ignore-certificate-error")   # ssl 问题
+    chrome_options.add_argument("--ignore-ssl-errors")
     # chrome_options.add_argument('--disable-gpu')
     # browser = webdriver.Chrome(options=chrome_options)
     browser = webdriver.Chrome(options=chrome_options)
