@@ -3,8 +3,8 @@
 @Version: 1.0
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
-@LastEditors: Demoon
-@LastEditTime: 2020-06-12 10:24:36
+LastEditors: Please set LastEditors
+LastEditTime: 2021-03-01 10:21:12
 '''
 import requests
 import json
@@ -15,8 +15,8 @@ import datetime
 class UploadData:
     def __init__(
         self,
-        account='houduan',
-        pwd='hd666666',
+        account='caiji',
+        pwd='caiji@20200107',
         secret_key='cd283176e1e2c2a69a00e76a52742d42a4ae0b3780eec48fae289977008e9a3b',
     ):
         with open("./config-default.json", encoding='utf-8') as defcfg:
