@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-01-15 18:13:40
+LastEditTime: 2021-03-16 17:35:43
 '''
 import json
 import requests
@@ -208,7 +208,7 @@ class DataGather:
         }
         for key in parm:
             url += str(key) + "=" + str(parm[key]) + "&"
-        for dt in mytools.dateList():
+        for dt in mytools.fewDays():
             day = dt.strftime('%Y%m%d')
             day_str = str(dt)
             data['page'] = 1  # 重新计页

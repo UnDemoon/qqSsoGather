@@ -4,22 +4,26 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-01 10:21:12
+LastEditTime: 2021-03-16 16:47:53
 '''
 import requests
 import json
 import time
-import datetime
+import os
+import utils as myTools
+# import datetime
 
 
-class UploadData:
+class HouyiApi:
     def __init__(
         self,
         account='caiji',
         pwd='caiji@20200107',
         secret_key='cd283176e1e2c2a69a00e76a52742d42a4ae0b3780eec48fae289977008e9a3b',
+        platform_type='WeixinData',
     ):
-        with open("./config-default.json", encoding='utf-8') as defcfg:
+        file = myTools.filePath("config-default.json")
+        with open(file, encoding='utf-8') as defcfg:
             cfg = json.load(defcfg)
         self.host = cfg['upload_host']
         self.secret_key = secret_key
@@ -29,9 +33,9 @@ class UploadData:
             'addQqSsoCampaign':
             self.host + '/api/WeixinData/addQqSsoCampaign.html',
         }
-        self.token = self.getToken(account, pwd)
+        self.token = self._getToken(account, pwd)
 
-    def getToken(self, acc, pwd):
+    def _getToken(self, acc, pwd):
         data = {
             'account': acc,
             'password': pwd,
@@ -51,18 +55,30 @@ class UploadData:
             print(str(e))
         return res
 
-    def up(self, data_type, post_data):
+    def up(self, data_type: str, post_data: dict):
         #   转换为字符串
         post_data = json.JSONEncoder().encode(post_data)
         #   构建数据
         data = {'token': self.token, 'data': post_data}
         #   发送
-        self.subUp(self.urls[data_type], data)
+        res = self._subUp(self.urls[data_type], data)
+        return res
 
     #   上传数据重传机制
-    def subUp(self, url, data, time=3):
-        if time > 0:
+    def _subUp(self, url, data, time_count=3):
+        res = False
+        count = time_count
+        if count > 0:
             res = self.post(url, data)
             if res.get('Status') != 200:
                 time.sleep(2)
-                self.subUp(url, data, time - 1)
+                res = self._subUp(url, data, count - 1)
+        return res
+
+    #   多页数据获取
+    def pageData(self, data_type: str, pageindex: int = 1, pagesize: int = 2000):
+        #   构建数据
+        data = {'token': self.token, 'pageindex': pageindex, 'pagesize': pagesize}
+        #   发送
+        res = self._subUp(self.urls[data_type], data)
+        return res

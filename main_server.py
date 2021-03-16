@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-02-04 10:35:09
+LastEditTime: 2021-03-16 17:51:34
 '''
 #  基础模块
 import sys
@@ -22,7 +22,7 @@ from home import Ui_MainWindow as Ui
 import login as lgm
 #   引入requests类
 from DataGather import DataGather
-from UploadData import UploadData
+from HouyiApi import HouyiApi
 #   工具集
 # import utils as mytools
 
@@ -58,6 +58,7 @@ class MyApp(QtWidgets.QMainWindow, Ui):
         logging.debug("browserInit succee")
         c_type, cookies = lgm.loginByBrowser(self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10")
         if c_type and cookies:
+            print(c_type, cookies)
             #   线程运行采集
             gaThr = GatherThread(self.browser, c_type, cookies, '!完成!')
             gaThr.sig.completed.connect(self.log)
@@ -90,6 +91,7 @@ class GatherThread(QThread):
         self.sig = CompletionSignal()
 
     def run(self):
+        print('run')
         cookies = self.cookies
         #   开发平台数据采集
         gather = DataGather(cookies)
@@ -98,7 +100,7 @@ class GatherThread(QThread):
         else:
             accs = gather.listAccountSpe()
         print(accs)
-        UpData = UploadData()
+        UpData = HouyiApi()
         acCookies = None
         for ac in accs:
             if not acCookies:
@@ -110,7 +112,6 @@ class GatherThread(QThread):
             data = subGater.dataPlan(ac.get('account_id'))
             UpData.up('addQqSsoCampaign', data)
         self.browser.quit()
-        self.sig.completed.emit(self.info)
 
 
 '''
