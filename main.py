@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-02-04 10:35:09
+LastEditTime: 2021-03-17 14:04:14
 '''
 #  基础模块
 import sys
@@ -97,16 +97,9 @@ class GatherThread(QThread):
             accs = gather.listAccount()
         else:
             accs = gather.listAccountSpe()
-        print(accs)
         UpData = UploadData()
-        acCookies = None
         for ac in accs:
-            if not acCookies:
-                acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
-            if not acCookies:
-                logging.error("Error in get account cookies params={}".format(str(ac)))
-                continue
-            subGater = DataGather(acCookies)
+            subGater = DataGather(cookies)
             data = subGater.dataPlan(ac.get('account_id'))
             UpData.up('addQqSsoCampaign', data)
         self.browser.quit()
