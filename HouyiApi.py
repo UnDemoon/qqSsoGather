@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-16 16:47:53
+LastEditTime: 2021-03-18 13:55:52
 '''
 import requests
 import json
@@ -28,10 +28,11 @@ class HouyiApi:
         self.host = cfg['upload_host']
         self.secret_key = secret_key
         self.urls = {
-            'token':
-            self.host + '/api/WeixinData/accessToken.html',
-            'addQqSsoCampaign':
-            self.host + '/api/WeixinData/addQqSsoCampaign.html',
+            'token': self.host + '/api/WeixinData/accessToken.html',
+            'addQqSsoCampaign': self.host + '/api/WeixinData/addQqSsoCampaign.html',
+            'setQqssoCookies': self.host + '/api/WeixinData/setQqssoCookies.html',
+            'getQqssoCookies': self.host + '/api/WeixinData/getQqssoCookies.html',
+            'notifyQqssoCookies': self.host + '/api/WeixinData/notifyQqssoCookies.html',
         }
         self.token = self._getToken(account, pwd)
 

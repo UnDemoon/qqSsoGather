@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-16 17:35:43
+LastEditTime: 2021-03-18 14:19:13
 '''
 import json
 import requests
@@ -13,7 +13,7 @@ import logging
 
 
 class DataGather:
-    def __init__(self, cookie):
+    def __init__(self, cookie: list):
         self.colloctConf = {
             'get_portal_data': {
                 'url': 'https://sso.e.qq.com/login/get_portal_data',
@@ -66,11 +66,14 @@ class DataGather:
 
     #   post 方法
     def _post(self, url, para):
-        res = self._subPost(url, para)
-        max_try = 3
-        while (res.get('code') != 0) and (res.get('errno') != 0) and (max_try > 0):
-            mytools.randomSleep()
+        res = False
+        max_try = 2
+        while True:
             res = self._subPost(url, para)
+            if res.get('code') == 0 or res.get('errno') == 0 or max_try <= 0:
+                break
+            else:
+                mytools.randomSleep()
             max_try = max_try - 1
         return res
 
@@ -80,8 +83,8 @@ class DataGather:
         try:
             r = self.req.post(url, para)
             res = r.json()
-        except BaseException as e:
-            logging.WARNING(str(e))
+        except Exception as e:
+            print(e)
         return res
 
     # 获取用户列
@@ -122,7 +125,6 @@ class DataGather:
     '''
 
     def listAccountSpe(self):
-        acc_info = self.loginAccSpe()
         self.req.headers = {
             "accept": "application/json, text/plain, */*",
             "accept-encoding": "gzip, deflate, br",
@@ -135,25 +137,27 @@ class DataGather:
             "sec-fetch-site": "same-origin",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4270.0 Safari/537.36"
             }
-        #   构建发送数据
-        cf = self.colloctConf
-        payload = cf['spe_acc_list']['data']
-        payload['user_id'] = acc_info['user_id']
-        suix, euix = mytools.timeLag()
-        payload['start_date_millons'] = int(str(suix) + '000')
-        payload['end_date_millons'] = int(str(euix) + '000')
-        #   发送
-        data = self._post(cf['spe_acc_list']['url'], json.dumps(payload))
+        acc_info = self.loginAccSpe()
         account_list = []
-        #   结果处理
-        try:
-            for item in data['data']['list']:
-                account_list.append({
-                    "account_id": item['account_id'],
-                    "url": "https://ad.qq.com/atlas/{0}/admanage/adgroup".format(str(item['account_id']))
-                })
-        except Exception:
-            pass
+        if acc_info:
+            #   构建发送数据
+            cf = self.colloctConf
+            payload = cf['spe_acc_list']['data']
+            payload['user_id'] = acc_info['user_id']
+            suix, euix = mytools.timeLag()
+            payload['start_date_millons'] = int(str(suix) + '000')
+            payload['end_date_millons'] = int(str(euix) + '000')
+            #   发送
+            data = self._post(cf['spe_acc_list']['url'], json.dumps(payload))
+            #   结果处理
+            try:
+                for item in data['data']['list']:
+                    account_list.append({
+                        "account_id": item['account_id'],
+                        "url": "https://ad.qq.com/atlas/{0}/admanage/adgroup".format(str(item['account_id']))
+                    })
+            except Exception:
+                pass
         return account_list
 
     def loginAccSpe(self):

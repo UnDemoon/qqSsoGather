@@ -4,22 +4,15 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-16 17:51:34
+LastEditTime: 2021-03-18 16:39:53
 '''
 #  基础模块
 import sys
 import json
 import logging
 #   selenium相关
-from selenium import webdriver
-#   qt5
-from PyQt5 import QtWidgets
-from PyQt5.Qt import QThread
-from PyQt5.QtCore import (pyqtSignal, QObject)
-#   引入ui文件
-from home import Ui_MainWindow as Ui
-#   引入登录模块
-import login as lgm
+#   threading
+import threading
 #   引入requests类
 from DataGather import DataGather
 from HouyiApi import HouyiApi
@@ -27,91 +20,25 @@ from HouyiApi import HouyiApi
 # import utils as mytools
 
 
-class MyApp(QtWidgets.QMainWindow, Ui):
-    def __init__(self):
-        QtWidgets.QMainWindow.__init__(self)
-        self.account_info = None
-        self.browser = None
-        self.threadPools = []
-        Ui.__init__(self)
-        self.setupUi(self)
-        self._initdata()
-        self.signinButton.clicked.connect(self.signin)
-
-    #   数据初始化
-    def _initdata(self):
-        with open("./config-default.json", encoding='utf-8') as defcfg:
-            cfg = json.load(defcfg)
-            self.account_info = cfg['account_list']
-        notelist = cfg['instructions'].split('；')
-        for line in notelist:
-            self.log(line, False)
-
-    #   按钮触发
-    def signin(self):
-        self.lgGether()
-
-    #   登录并采集
-    def lgGether(self):
-        self.log(' 开始')
-        self.browser = browserInit()
-        logging.debug("browserInit succee")
-        c_type, cookies = lgm.loginByBrowser(self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10")
-        if c_type and cookies:
-            print(c_type, cookies)
-            #   线程运行采集
-            gaThr = GatherThread(self.browser, c_type, cookies, '!完成!')
-            gaThr.sig.completed.connect(self.log)
-            self.threadPools.append(gaThr)  # 加入线程池，局域变量线程未完成完后销毁导致异常
-            gaThr.start()
-        else:
-            self.log("登录异常，获取cookies失败，请稍后重新启动再次尝试！")
-
-    #    输出信息
-    def log(self, text, line=True):
-        if line:
-            self.logView.appendPlainText('-' * 20)
-        self.logView.appendPlainText(text)
-        return True
-
-
-#   自定义的信号  完成信号
-class CompletionSignal(QObject):
-    completed = pyqtSignal(str)
-
-
 # gather采集线程
-class GatherThread(QThread):
-    def __init__(self, browser, c_type, cookies, loginfo):
+class GatherThread(threading.Thread):
+    def __init__(self, cookies_info: tuple, houyiapi: object):
         super().__init__()
-        self.acc_type = c_type
-        self.cookies = cookies
-        self.info = loginfo
-        self.browser = browser
-        self.sig = CompletionSignal()
+        self.cookies_info = cookies_info
+        self.api = houyiapi
 
     def run(self):
-        print('run')
-        cookies = self.cookies
+        conf_id, cookies = self.cookies_info
         #   开发平台数据采集
         gather = DataGather(cookies)
-        if self.acc_type == 1:
-            accs = gather.listAccount()
+        accs = gather.listAccount() + gather.listAccountSpe()
+        if not accs or len(accs) <= 0:
+            self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 0})
         else:
-            accs = gather.listAccountSpe()
-        print(accs)
-        UpData = HouyiApi()
-        acCookies = None
-        for ac in accs:
-            if not acCookies:
-                acCookies = lgm.loginAccount(self.browser, ac.get('url', None))
-            if not acCookies:
-                logging.error("Error in get account cookies params={}".format(str(ac)))
-                continue
-            subGater = DataGather(acCookies)
-            data = subGater.dataPlan(ac.get('account_id'))
-            UpData.up('addQqSsoCampaign', data)
-        self.browser.quit()
+            for ac in accs:
+                data = gather.dataPlan(ac.get('account_id'))
+                self.api.up('addQqSsoCampaign', data)
+            self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 1})
 
 
 '''
@@ -129,34 +56,21 @@ def logInit():
     logging.basicConfig(filename=log_file, level=log_level, format=log_format)
 
 
-# 浏览器开启
-def browserInit():
-    # 实例化一个chrome浏览器
-    chrome_options = webdriver.ChromeOptions()
-    # options.add_argument(".\ChromePortable\App\Chrome\chrome.exe");
-    chrome_options.binary_location = ".\\ChromePortable\\App\\Chrome\\chrome.exe"
-    # chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument('--headless')   #   静默开启
-    # chrome_options.add_argument('--ignore-certificate-errors')
-    chrome_options.add_argument("--ignore-certificate-error")   # ssl 问题
-    chrome_options.add_argument("--ignore-ssl-errors")
-    # chrome_options.add_argument('--disable-gpu')
-    # browser = webdriver.Chrome(options=chrome_options)
-    browser = webdriver.Chrome(options=chrome_options)
-    browser.maximize_window()
-    # 设置等待超时
-    return browser
-
 if __name__ == '__main__':
-    # 定义为全局变量，方便其他模块使用
-    global URL, RUN_EVN
+    global RUN_EVN
     # 登录界面的url
     try:
         RUN_EVN = sys.argv[1]
     except Exception:
         RUN_EVN = "product"
-    logInit()
-    app = QtWidgets.QApplication(sys.argv)
-    window = MyApp()
-    window.show()
-    sys.exit(app.exec_())
+    #   获取后台cookies
+    houyiapi = HouyiApi()
+    conf_cookies = houyiapi.up('getQqssoCookies', '')
+    for item in conf_cookies.get('Result', {}).get('List', []):
+        try:
+            cookies_info = (item.get('id'), json.loads(item.get('cookies')))
+        except Exception:
+            houyiapi.up('notifyQqssoCookies', {'id': item.get('id'), 'run_res': 0})
+            continue
+        thr = GatherThread(cookies_info, houyiapi)
+        thr.start()
