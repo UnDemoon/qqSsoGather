@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-18 16:39:53
+LastEditTime: 2021-03-22 14:43:10
 '''
 #  基础模块
 import sys
@@ -22,23 +22,34 @@ from HouyiApi import HouyiApi
 
 # gather采集线程
 class GatherThread(threading.Thread):
-    def __init__(self, cookies_info: tuple, houyiapi: object):
+    def __init__(self, cookies_info: tuple, houyiapi: object, run_type: int):
         super().__init__()
         self.cookies_info = cookies_info
         self.api = houyiapi
+        self.run_type = run_type
 
     def run(self):
         conf_id, cookies = self.cookies_info
         #   开发平台数据采集
         gather = DataGather(cookies)
-        accs = gather.listAccount() + gather.listAccountSpe()
-        if not accs or len(accs) <= 0:
-            self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 0})
+        #   详细数据采集
+        if 1 == self.run_type:
+            accs = gather.listAccount() + gather.listAccountSpe()
+            if not accs or len(accs) <= 0:
+                self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 0})
+            else:
+                for ac in accs:
+                    data = gather.dataPlan(ac.get('account_id'))
+                    self.api.up('addQqSsoCampaign', data)
+                self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 1})
+        #   统计数据采集
         else:
-            for ac in accs:
-                data = gather.dataPlan(ac.get('account_id'))
-                self.api.up('addQqSsoCampaign', data)
-            self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 1})
+            summary_info = gather.accountSummary()
+            if summary_info:
+                data = summary_info.get('data', {})
+                self.api.up('addQqssoTimeCost', {'id': conf_id, 'run_res': 1, 'info': data})
+            else:
+                self.api.up('notifyQqssoCookies', {'id': conf_id, 'run_res': 0})
 
 
 '''
@@ -57,12 +68,14 @@ def logInit():
 
 
 if __name__ == '__main__':
-    global RUN_EVN
+    global RUN_EVN, RUN_TYPE
     # 登录界面的url
     try:
         RUN_EVN = sys.argv[1]
+        RUN_TYPE = sys.argv[2]
     except Exception:
         RUN_EVN = "product"
+        RUN_TYPE = '1'
     #   获取后台cookies
     houyiapi = HouyiApi()
     conf_cookies = houyiapi.up('getQqssoCookies', '')
@@ -72,5 +85,5 @@ if __name__ == '__main__':
         except Exception:
             houyiapi.up('notifyQqssoCookies', {'id': item.get('id'), 'run_res': 0})
             continue
-        thr = GatherThread(cookies_info, houyiapi)
+        thr = GatherThread(cookies_info, houyiapi, int(RUN_TYPE))
         thr.start()

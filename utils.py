@@ -1,12 +1,13 @@
 '''
 Author: your name
 Date: 2021-02-23 10:02:01
-LastEditTime: 2021-03-16 17:39:58
+LastEditTime: 2021-03-22 17:53:54
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /MiniProgramGather/utils.py
 '''
 import os
+import platform
 import random
 import time
 import requests
@@ -126,8 +127,12 @@ def writeToFile(file_path: str, data_str: str):
 
 #   文件的路径
 def filePath(file_name: str):
-    path = os.path.dirname(os.path.abspath(__file__))  # 获取当前路径
-    file = os.path.join(path, file_name)
+    sysstr = platform.system()
+    if (sysstr == "Windows"):
+        file = os.path.join('./', file_name)
+    else:
+        path = os.path.dirname(os.path.abspath(__file__))  # 获取当前路径
+        file = os.path.join(path, file_name)
     return file
 
 

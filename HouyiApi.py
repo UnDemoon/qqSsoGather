@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-18 13:55:52
+LastEditTime: 2021-03-22 17:54:57
 '''
 import requests
 import json
@@ -32,6 +32,7 @@ class HouyiApi:
             'addQqSsoCampaign': self.host + '/api/WeixinData/addQqSsoCampaign.html',
             'setQqssoCookies': self.host + '/api/WeixinData/setQqssoCookies.html',
             'getQqssoCookies': self.host + '/api/WeixinData/getQqssoCookies.html',
+            'addQqssoTimeCost': self.host + '/api/WeixinData/addQqssoTimeCost.html',
             'notifyQqssoCookies': self.host + '/api/WeixinData/notifyQqssoCookies.html',
         }
         self.token = self._getToken(account, pwd)

@@ -4,7 +4,7 @@
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-18 14:19:13
+LastEditTime: 2021-03-22 12:01:19
 '''
 import json
 import requests
@@ -44,7 +44,13 @@ class DataGather:
                     "page": 1,
                     "page_size": 50
                 }
-            }
+            },
+            'account_summary': {
+                'url': 'https://ad.qq.com/tap/v1/account_daily_report/summary',
+                'data': {
+                    'user_id': 0
+                }
+            },
         }
         #   配置requests session
         sess = requests.session()  # 新建session
@@ -66,7 +72,7 @@ class DataGather:
 
     #   post 方法
     def _post(self, url, para):
-        res = False
+        res = {}
         max_try = 2
         while True:
             res = self._subPost(url, para)
@@ -163,7 +169,7 @@ class DataGather:
     def loginAccSpe(self):
         cf = self.colloctConf
         data = self._post(cf['spe_login']['url'], "")
-        return data['data']
+        return data.get('data')
 
     #   获取推广计划数据
     def dataPlan(self, own_id):
@@ -197,8 +203,7 @@ class DataGather:
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36 OPR/70.0.3728.154",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36 OPR/70.0.3728.154",
             "x-requested-with": "XMLHttpRequest",
         }
         parm = {
@@ -229,6 +234,31 @@ class DataGather:
                 res = self._post(url, data_json_str)
                 res_list += self.dataDeal(res, day_str)
         return res_list
+
+    #   账户信息
+    def accountSummary(self):
+        self.req.headers = {
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "zh-CN,zh;q=0.9",
+            "content-type": "application/json; charset=UTF-8",
+            "origin": "https://ad.qq.com",
+            "referer": "https://ad.qq.com/worktable/",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4270.0 Safari/537.36"
+            }
+        acc_info = self.loginAccSpe()
+        summary_info = False
+        if acc_info:
+            #   构建发送数据
+            cf = self.colloctConf
+            payload = cf['account_summary']['data']
+            payload['user_id'] = acc_info['user_id']
+            #   发送
+            summary_info = self._post(cf['account_summary']['url'], json.dumps(payload))
+        return summary_info
 
     @staticmethod
     def dataDeal(campaign_data: dict, day: str):

@@ -1,18 +1,10 @@
 '''
-Author: your name
-Date: 2021-03-16 14:33:53
-LastEditTime: 2021-03-18 15:45:36
-LastEditors: Please set LastEditors
-Description: In User Settings Edit
-FilePath: /qqSsoGather/main_user.py
-'''
-'''
 @Description:
 @Version: 1.0
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-11 10:28:55
+LastEditTime: 2021-03-22 17:11:17
 '''
 import json
 #  基础模块
@@ -22,8 +14,6 @@ import sys
 from selenium import webdriver
 #   qt5
 from PyQt5 import QtWidgets
-from PyQt5.Qt import QThread
-from PyQt5.QtCore import (pyqtSignal, QObject)
 #   引入ui文件
 from home import Ui_MainWindow as Ui
 #   引入登录模块
@@ -31,7 +21,7 @@ import login as lgm
 #   引入requests类
 from HouyiApi import HouyiApi
 #   工具集
-# import utils as mytools
+import utils as myTools
 
 
 class MyApp(QtWidgets.QMainWindow, Ui):
@@ -46,7 +36,9 @@ class MyApp(QtWidgets.QMainWindow, Ui):
 
     #   数据初始化
     def _initdata(self):
-        with open("./config-default.json", encoding='utf-8') as defcfg:
+        file = myTools.filePath("config-default.json")
+        myTools.logFile(file)
+        with open(file, encoding='utf-8') as defcfg:
             cfg = json.load(defcfg)
         notelist = cfg['instructions'].split('；')
         for line in notelist:
