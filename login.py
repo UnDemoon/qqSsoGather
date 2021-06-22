@@ -1,11 +1,11 @@
-'''
-@Description: 
+"""
+@Description:
 @Version: 1.0
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
 LastEditTime: 2021-03-17 11:14:55
-'''
+"""
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -25,7 +25,7 @@ def loginByBrowser(browser, url):
     long_wait = WebDriverWait(browser, 120)
     login_flag = False
     try:
-        login_flag = long_wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#tablebottom,.header-content .avatar')))
+        login_flag = long_wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.icon-avator')))
     except Exception:
         pass
     if login_flag:

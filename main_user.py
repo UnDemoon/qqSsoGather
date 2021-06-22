@@ -1,11 +1,11 @@
-'''
+"""
 @Description:
 @Version: 1.0
 @Autor: Demoon
 @Date: 1970-01-01 08:00:00
 LastEditors: Please set LastEditors
-LastEditTime: 2021-03-22 17:11:17
-'''
+LastEditTime: 2021-03-23 09:23:16
+"""
 import json
 #  基础模块
 import sys
@@ -21,7 +21,7 @@ import login as lgm
 #   引入requests类
 from HouyiApi import HouyiApi
 #   工具集
-import utils as myTools
+import utils as mytools
 
 
 class MyApp(QtWidgets.QMainWindow, Ui):
@@ -31,27 +31,27 @@ class MyApp(QtWidgets.QMainWindow, Ui):
         self.api = HouyiApi()
         Ui.__init__(self)
         self.setupUi(self)
-        self._initdata()
-        self.signinButton.clicked.connect(self.signin)
+        self._initData()
+        self.signinButton.clicked.connect(self.signIn)
 
     #   数据初始化
-    def _initdata(self):
-        file = myTools.filePath("config-default.json")
-        myTools.logFile(file)
-        with open(file, encoding='utf-8') as defcfg:
-            cfg = json.load(defcfg)
-        notelist = cfg['instructions'].split('；')
-        for line in notelist:
+    def _initData(self):
+        file = mytools.filePath("config-default.json")
+        with open(file, encoding='utf-8') as config_file:
+            cfg = json.load(config_file)
+        note_list = cfg['instructions'].split('；')
+        for line in note_list:
             self.log(line, False)
 
     #   按钮触发
-    def signin(self):
-        self.lgGether()
+    def signIn(self):
+        self.loginGether()
 
     #   登录并采集
-    def lgGether(self):
+    def loginGether(self):
         self.browser = browserInit()
-        cookies = lgm.loginByBrowser(self.browser, "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10")
+        cookies = lgm.loginByBrowser(self.browser,
+                                     "https://sso.e.qq.com/login/hub?sso_redirect_uri=https%3A%2F%2Fe.qq.com%2Fads%2F&service_tag=10")
         if cookies:
             account_item = next((item for item in cookies if item.get('name', None) == 'ptui_loginuin'), None)
             account = account_item.get('value')
@@ -82,7 +82,7 @@ def browserInit():
     # chrome_options = webdriver.ChromeOptions()
     # chrome_options.add_argument('--headless')   #   静默开启
     # chrome_options.add_argument('--ignore-certificate-errors')
-    chrome_options.add_argument("--ignore-certificate-error")   # ssl 问题
+    chrome_options.add_argument("--ignore-certificate-error")  # ssl 问题
     chrome_options.add_argument("--ignore-ssl-errors")
     # chrome_options.add_argument('--disable-gpu')
     # browser = webdriver.Chrome(options=chrome_options)
@@ -90,6 +90,7 @@ def browserInit():
     browser.maximize_window()
     # 设置等待超时
     return browser
+
 
 if __name__ == '__main__':
     # 定义为全局变量，方便其他模块使用
